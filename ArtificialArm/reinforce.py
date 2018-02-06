@@ -17,7 +17,7 @@ class Actor(object):
 		self.sess = sess
 		self.epsilon = 0.1
 		self.mode = mode
-		self.decay = 0.0001
+		self.decay = 0.9999
 		
 		self.action_shape = 2
 		self.state_shape = 7
@@ -55,14 +55,15 @@ class Actor(object):
 		# if self.mode == 'train':
 		# 	if np.random.rand() > self.epsilon:
 		s = s[np.newaxis, :]
-		self.out = self.sess.run(self.a, feed_dict={self.s:s}) + (2*np.random.rand(2) - 1) * self.epsilon
+		self.out = np.clip(np.random.normal(self.sess.run(self.a, feed_dict={self.s:s}), max(2, self.decay*self.epsilon)), *[-1,1])
 		# 	else:
 		# 		self.out = 2*np.random.rand(2) - 1
 
 		# else:
 		# 		s = s[np.newaxis, :]
 		# 		self.out = self.sess.run(self.a, feed_dict={self.s:s})
-		print(self.out)
+		# print(self.out)
+
 		return self.out
 
 	def learn(self, s):
@@ -70,6 +71,7 @@ class Actor(object):
 		if self.learn_counter % self.iter_max == 0:
 			self.sess.run(self.resign_op)
 		self.learn_counter += 1
+		self.epsilon = self.decay*self.epsilon
 
 	def cal_grad(self, grad_c):
 		opt = tf.gradients(xs=self.e_params, ys=self.a, grad_ys=grad_c)
@@ -178,11 +180,11 @@ class Memory(object):
 if __name__ == '__main__':
 
 	env = Arm()
-	train_time = 50
+	train_time = 500
 	# iter_max = 3000
-	batch_size = 16
-	step_max = 500
-	mode = 'train'
+	batch_size = 32
+	step_max = 200
+	mode = 'tran'
 
 	sess = tf.Session()
 
@@ -206,7 +208,7 @@ if __name__ == '__main__':
 				env.render()
 				a = act.choose_action(s)
 				s_, r, done = env.step(a.ravel())
-				# print(s)
+				print(a)
 				# time.sleep(1)
 				mem.add(s, s_, r)
 

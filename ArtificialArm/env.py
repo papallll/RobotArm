@@ -22,19 +22,19 @@ class Arm(object):
 
 	def step(self, action):
 
-		self.action = action * 0.05
+		self.action = action * 0.03
 		self.state += self.action
 		self.state = self.state % 2
 		# print(self.state)
 		
 		reward, done, tmp = self.reward()
 
-		return np.hstack([self.state, tmp, done*1]), reward, done
+		return np.hstack([tmp, self.target_in*1]), reward, done
 
 	def reset(self):
 		
-		self.action = np.zeros([2])
-		self.state = np.zeros([2])
+		# self.action = np.zeros([2])
+		self.state = 2 * np.random.rand(2)
 		self.target_in = False
 		self.counter = 0
 		# self.target_cor = [300,300]
@@ -62,7 +62,9 @@ class Arm(object):
 			done = False
 			self.r = - distance / 200
 			self.counter = 0
+			self.target_in = False
 		else:
+			self.target_in = True
 			if not self.counter:
 				self.r = 1 - distance / 200
 				self.counter += 1
@@ -72,9 +74,9 @@ class Arm(object):
 				self.counter += 1
 				done = False
 				if self.counter >= 50:
-					self.r += 100
+					self.r += 10
 					done = True
-		return self.r, done, np.hstack([(top_cor - self.target_cor) / 200, (np.array(self.target_cor) - self.center) / 200])
+		return self.r, done, np.hstack([(top_cor - self.target_cor) / 200, (middle_cor - self.target_cor) / 200, (np.array(self.target_cor) - self.center) / 200])
 
 
 class Viewer(pyglet.window.Window):
